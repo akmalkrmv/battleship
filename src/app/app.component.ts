@@ -1,5 +1,10 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { Ship, Direction, ShipType } from './models/ship';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+} from '@angular/core';
+import { BehaviorSubject } from 'rxjs';
+import { Ship, Direction, ShipType, Field } from './models/ship';
 
 export const FIELD_LENGTH = 10;
 export const SHIPS: Ship[] = [
@@ -12,10 +17,16 @@ export const SHIPS: Ship[] = [
   new Ship(ShipType.submarine),
 ];
 
-export class Field {
-  public hit: boolean;
-  public sunk: boolean;
-  constructor(public ship?: Ship) {}
+export class Player {
+  public ships: Ship[] = [];
+  public battlefield: Field[] = [];
+  constructor(public name: string, public isComputer = false) {}
+}
+
+export enum GameState {
+  preparing = 'preparing',
+  playing = 'playing',
+  finished = 'finished',
 }
 
 @Component({
@@ -25,63 +36,135 @@ export class Field {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppComponent {
-  battlefield: Field[] = [];
-  opponentfield: Field[] = [];
-  opponentType: 'pc' | 'player' = 'pc';
-  current = true;
+  public loading$ = new BehaviorSubject<boolean>(false);
+  public state: GameState = GameState.preparing;
+  public players: Player[] = [];
+  public current: Player;
+  public user: Player;
+  public opponent: Player;
+  public winner: Player;
+
+  constructor(private changeDetector: ChangeDetectorRef) {}
 
   ngOnInit() {
-    this.randomize();
+    this.user = new Player('Player');
+    this.opponent = new Player('PC', true);
+    this.players = [this.user, this.opponent];
+    this.current = this.user;
 
-    if (this.opponentType == 'pc') {
-      this.placeShips(this.opponentfield);
+    this.prepare();
+  }
+
+  public prepare() {
+    for (const player of this.players) {
+      this.placeShips(player.battlefield);
     }
   }
 
+  public start() {
+    this.state = GameState.playing;
+    this.current = this.user;
+  }
+  public resign() {
+    this.winner = this.opponent;
+    this.state = GameState.finished;
+  }
+  public restart() {
+    this.winner = null;
+    this.state = GameState.preparing;
+    this.prepare();
+  }
+
   public randomize() {
-    this.placeShips(this.battlefield);
+    this.placeShips(this.user.battlefield);
   }
 
   public fire(field: Field) {
+    if (this.state !== GameState.playing) return;
+    if (field.hit) return;
+
     field.hit = true;
-    this.current = !this.current;
-    if (!this.current) {
-      let random = -1;
-      while (
-        this.opponentfield[random] != null &&
-        this.opponentfield[random].hit == false
-      ) {
-        random = Math.floor(Math.random() * this.opponentfield.length);
+
+    if (field.ship) {
+      field.ship.hits++;
+      field.sunk = field.ship.sunk = field.ship.hits === field.ship.length;
+
+      if ((this.winner = this.isGameOver())) {
+        this.state = GameState.finished;
+        return;
+      }
+    } else {
+      this.nextPlayer();
+    }
+
+    if (this.current.isComputer) {
+      let random = this.getRandomField(this.user.battlefield);
+      if (random) {
+        this.fire(random);
       }
     }
   }
 
-  public onDrop($event) {
-    $event.preventDefault();
-    console.log($event);
+  private nextPlayer() {
+    const index = this.players.findIndex((player) => player === this.current);
+    const nextIndex = (index + 1) % this.players.length;
+
+    this.current = this.players[nextIndex];
   }
 
+  private getRandomField(fields: Field[]): Field {
+    const nothit = fields.filter((field) => field && !field.hit);
+    const random = Math.floor(Math.random() * nothit.length);
+
+    return nothit[random];
+  }
+
+  private isGameOver(): Player {
+    const isAllSunk = (player: Player) => {
+      return player.battlefield
+        .filter((field) => field.ship)
+        .every((field) => field.ship.sunk);
+    };
+
+    if (isAllSunk(this.user)) {
+      return this.opponent;
+    }
+
+    if (isAllSunk(this.opponent)) {
+      return this.user;
+    }
+
+    return null;
+  }
+
+  public onDrop($event) {
+    $event.preventDefault();
+  }
   public onDragOver($event) {
     $event.stopPropagation();
     $event.preventDefault();
   }
 
-  private clearField(field: Field[]) {
+  private clearFields(fields: Field[]) {
     for (let i = 0; i < FIELD_LENGTH * FIELD_LENGTH; i++) {
-      field[i] = new Field();
+      fields[i] = new Field();
     }
   }
 
   private placeShips(field: Field[]) {
-    this.clearField(field);
+    this.loading$.next(true);
 
-    SHIPS.forEach((ship) => {
-      const rotate = Math.random() < 0.5;
-      const direction = rotate ? Direction.horizontal : Direction.vertical;
-      this.placeShip(field, { ...ship, direction });
+    setTimeout(() => {
+      this.clearFields(field);
+
+      SHIPS.forEach((ship) => {
+        const rotate = Math.random() < 0.5;
+        const direction = rotate ? Direction.horizontal : Direction.vertical;
+        this.placeShip(field, { ...ship, direction });
+      });
+
+      this.loading$.next(false);
     });
-
-    console.log(field);
   }
 
   private placeShip(field: Field[], ship: Ship) {
@@ -122,12 +205,10 @@ export class AppComponent {
       if (isValidPlace) {
         for (let i = 0; i < length; i++) {
           const index = random + i * step;
+          const isStart = i == 0;
+          const isEnd = i == length - 1;
 
-          field[index] = new Field({
-            ...ship,
-            isStart: i == 0,
-            isEnd: i == length - 1,
-          });
+          field[index] = new Field(ship, isStart, isEnd);
         }
 
         return true;

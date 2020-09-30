@@ -1,46 +1,89 @@
 <router-outlet></router-outlet>
 
+<mat-progress-bar
+  [mode]="(loading$ | async) ? 'indeterminate' : 'determinate'"
+></mat-progress-bar>
+
 <div class="container">
   <h1>Battleship</h1>
 </div>
 
-<div class="container">
+<div class="container players">
+  <ng-container *ngFor="let player of players">
+    <div class="active">
+      {{ player.name }} <span *ngIf="winner === player">(winner)</span>
+    </div>
+  </ng-container>
+</div>
+
+<div class="container state-{{ state }}">
   <div class="battlefield player-field">
-    <ng-container *ngFor="let field of battlefield">
+    <ng-container *ngFor="let field of user.battlefield">
       <div
         *ngIf="field.ship as ship"
         class="{{ ship.name }} {{ ship.direction }}"
-        [class.hit]="field.hit"
         [class.taken]="ship"
-        [class.start]="ship.isStart"
-        [class.end]="ship.isEnd"
+        [class.sunk]="ship.sunk"
+        [class.start]="field.isStart"
+        [class.end]="field.isEnd"
         (drop)="onDrop($event)"
         (dragover)="onDragOver($event)"
         draggable="true"
-      ></div>
+      >
+        <div [class.hit]="field.hit"></div>
+      </div>
       <div *ngIf="!field.ship" [class.miss]="field.hit"></div>
     </ng-container>
   </div>
   <div class="battlefield opponent-field">
-    <div
-      *ngFor="let field of opponentfield"
-      [class.hit]="field.hit && field.ship"
-      [class.miss]="field.hit && !field.ship"
-      (click)="fire(field)"
-    ></div>
+    <ng-container *ngFor="let field of opponent.battlefield">
+      <div
+        *ngIf="field.ship as ship"
+        class="{{ ship.sunk ? ship.name : '' }} 
+        {{ ship.sunk ? ship.direction : '' }}"
+        [class.taken]="ship.sunk"
+        [class.sunk]="ship.sunk"
+        [class.start]="field.isStart"
+        [class.end]="field.isEnd"
+        (click)="fire(field)"
+      >
+        <div [class.hit]="field.hit"></div>
+      </div>
+      <div
+        *ngIf="!field.ship"
+        [class.miss]="field.hit"
+        (click)="fire(field)"
+      ></div>
+    </ng-container>
   </div>
 </div>
 
 <div class="container">
   <div class="controls">
-    <button
-      mat-button
-      mat-raised-button
-      color="secondary"
-      (click)="randomize()"
-    >
-      Randomize
-    </button>
-    <button mat-button mat-raised-button color="primary">Start</button>
+    <ng-container *ngIf="state == 'preparing'">
+      <button
+        mat-button
+        mat-raised-button
+        color="secondary"
+        (click)="randomize()"
+      >
+        Randomize
+      </button>
+      <button mat-button mat-raised-button color="primary" (click)="start()">
+        Start
+      </button>
+    </ng-container>
+
+    <ng-container *ngIf="state == 'playing'">
+      <button mat-button mat-raised-button color="warn" (click)="resign()">
+        Resign
+      </button>
+    </ng-container>
+
+    <ng-container *ngIf="state == 'finished'">
+      <button mat-button mat-raised-button color="primary" (click)="restart()">
+        Play again
+      </button>
+    </ng-container>
   </div>
 </div>
