@@ -100,7 +100,10 @@ export class AppComponent {
     if (this.current.isComputer) {
       let random = this.getRandomField(this.user.battlefield);
       if (random) {
-        this.fire(random);
+        setTimeout(() => {
+          this.fire(random);
+          this.changeDetector.detectChanges();
+        }, 1000);
       }
     }
   }
