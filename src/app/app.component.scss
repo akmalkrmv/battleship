@@ -1,0 +1,221 @@
+// variablse
+$riple-scale: 3;
+$ship-margin: 3px;
+$ship-radius: 100%;
+
+// keyframes
+@keyframes ripple {
+  0% {
+    opacity: 1;
+    transform: scale(0);
+  }
+  100% {
+    opacity: 0;
+    transform: scale($riple-scale);
+  }
+}
+@keyframes hit {
+  0% {
+    opacity: 1;
+    z-index: 10000;
+    transform: scale(0);
+  }
+  100% {
+    opacity: 0;
+    z-index: -1;
+    transform: scale(5);
+  }
+}
+
+// styles
+.container {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+h1 {
+  margin-top: 3vmin;
+  color: #fff;
+}
+
+.controls {
+  display: flex;
+  justify-content: center;
+
+  & button {
+    margin: 2vmin;
+    min-width: 100px;
+  }
+}
+
+.battlefield {
+  margin: 2vmin;
+  background-color: #00beff;
+  display: grid;
+  grid-template-rows: repeat(10, 4.6vmin);
+  grid-template-columns: repeat(10, 4.6vmin);
+}
+
+.battlefield {
+  & > div {
+    border-width: 1px;
+    border-style: dotted;
+    border-color: #fffa;
+    cursor: pointer;
+
+    &:hover {
+      background-color: #43d0ff;
+    }
+  }
+
+  .hit,
+  .miss {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+
+    &::after,
+    &::before {
+      content: "";
+      position: absolute;
+      background-color: #fff;
+      border-radius: 100%;
+      width: 2vmin;
+      height: 2vmin;
+    }
+    &::before {
+      animation: hit 0.3s ease-out forwards;
+    }
+  }
+
+  .hit {
+    &::after,
+    &::before {
+      background-color: red;
+    }
+  }
+
+  .taken {
+    background-color: #fff;
+    position: relative;
+
+    &:hover {
+      background-color: #fff;
+    }
+
+    &.vertical {
+      margin: 0 $ship-margin;
+    }
+    &.horizontal {
+      margin: $ship-margin 0;
+    }
+
+    &::before,
+    &::after {
+      content: "";
+      position: absolute;
+      animation: ripple 3s ease-out infinite forwards;
+      border: 1px solid #fff;
+      border-radius: 100%;
+      top: -1px;
+      left: -1px;
+      right: -1px;
+      bottom: -1px;
+    }
+
+    &::after {
+      animation-delay: 1s;
+    }
+
+    &.vertical::before,
+    &.vertical::after {
+      // animation-name: rippleX;
+      border-top: none;
+      border-bottom: none;
+    }
+    &.horizontal::before,
+    &.horizontal::after {
+      // animation-name: rippleY;
+      border-left: none;
+      border-right: none;
+    }
+
+    &.horizontal.start,
+    &.horizontal.start::before {
+      margin-left: $ship-margin;
+      border-top-left-radius: $ship-radius;
+      border-bottom-left-radius: $ship-radius;
+    }
+    &.horizontal.end,
+    &.horizontal.end::before {
+      margin-right: $ship-margin;
+      border-top-right-radius: $ship-radius;
+      border-bottom-right-radius: $ship-radius;
+    }
+    &.vertical.start,
+    &.vertical.start::before {
+      margin-top: $ship-margin;
+      border-top-left-radius: $ship-radius;
+      border-top-right-radius: $ship-radius;
+    }
+    &.vertical.end,
+    &.vertical.end::before {
+      margin-bottom: $ship-margin;
+      border-bottom-left-radius: $ship-radius;
+      border-bottom-right-radius: $ship-radius;
+    }
+  }
+}
+
+.ship {
+  background-color: #aaa;
+  margin: 1vmin;
+  width: calc(4.6vmin * var(--width, 1));
+  height: calc(4.6vmin * var(--height, 1));
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.destroyer {
+  --width: 1;
+  --height: 1;
+}
+.submarine {
+  --width: 2;
+  --height: 1;
+}
+.cruiser {
+  --width: 3;
+  --height: 1;
+}
+.battleship {
+  --width: 4;
+  --height: 1;
+}
+.carrier {
+  --width: 5;
+  --height: 1;
+}
+
+.destroyer.vertical {
+  --width: 1;
+  --height: 1;
+}
+.submarine.vertical {
+  --width: 1;
+  --height: 2;
+}
+.cruiser.vertical {
+  --width: 1;
+  --height: 3;
+}
+.battleship.vertical {
+  --width: 1;
+  --height: 4;
+}
+.carrier.vertical {
+  --width: 1;
+  --height: 5;
+}
