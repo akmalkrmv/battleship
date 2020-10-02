@@ -15,7 +15,10 @@ $ship-radius: 100%;
     --hit-size: 4vmin !important;
   }
   .battlefield {
-    --field-size: 6vmin !important;
+    --field-size: 7vmin !important;
+  }
+  .header {
+    display: none !important;
   }
 }
 
@@ -74,9 +77,17 @@ h1 {
 }
 
 .state-playing {
-  .battlefield.current > div:hover:not(.sunk):not(.taken) {
-    background-color: #43d0ff;
-    cursor: pointer;
+  .battlefield {
+    opacity: 0.6;
+
+    &.current {
+      opacity: 1;
+
+      & > div:hover:not(.sunk):not(.taken) {
+        background-color: #43d0ff;
+        cursor: pointer;
+      }
+    }
   }
 }
 
@@ -88,11 +99,7 @@ h1 {
   display: grid;
   grid-template-rows: repeat(10, var(--field-size));
   grid-template-columns: repeat(10, var(--field-size));
-  opacity: 0.5;
-
-  &.current {
-    opacity: 1;
-  }
+  opacity: 1;
 
   & > div {
     border-width: 1px;
