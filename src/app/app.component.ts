@@ -4,9 +4,11 @@ import {
   Component,
 } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
+import { Player } from './models/player';
 import { Ship, Direction, ShipType, Field } from './models/ship';
 
 export const FIELD_LENGTH = 10;
+export const FIELD_RANGE = FIELD_LENGTH * FIELD_LENGTH;
 export const SHIPS: Ship[] = [
   new Ship(ShipType.carrier),
   new Ship(ShipType.battleship),
@@ -17,18 +19,11 @@ export const SHIPS: Ship[] = [
   new Ship(ShipType.submarine),
 ];
 
-export class Player {
-  public ships: Ship[] = [];
-  public battlefield: Field[] = [];
-  constructor(public name: string, public isComputer = false) {}
-}
-
 export enum GameState {
   preparing = 'preparing',
   playing = 'playing',
   finished = 'finished',
 }
-
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -55,10 +50,12 @@ export class AppComponent {
     this.prepare();
   }
 
-  public prepare() {
-    for (const player of this.players) {
-      this.placeShips(player.battlefield);
-    }
+  public onDrop($event) {
+    $event.preventDefault();
+  }
+  public onDragOver($event) {
+    $event.stopPropagation();
+    $event.preventDefault();
   }
 
   public start() {
@@ -75,8 +72,16 @@ export class AppComponent {
     this.prepare();
   }
 
+  public prepare() {
+    this.user.battlefield = this.placeShips();
+
+    if (this.opponent.isComputer) {
+      this.opponent.battlefield = this.placeShips();
+    }
+  }
+
   public randomize() {
-    this.placeShips(this.user.battlefield);
+    this.user.battlefield = this.placeShips();
   }
 
   public fire(field: Field) {
@@ -85,16 +90,18 @@ export class AppComponent {
 
     field.hit = true;
 
-    if (field.ship) {
-      field.ship.hits++;
-      field.sunk = field.ship.sunk = field.ship.hits === field.ship.length;
+    const { ship } = field;
 
-      if ((this.winner = this.isGameOver())) {
-        this.state = GameState.finished;
-        return;
-      }
+    if (ship) {
+      ship.hits++;
+      field.sunk = ship.sunk = ship.hits === ship.length;
     } else {
       this.nextPlayer();
+    }
+
+    if ((this.winner = this.isGameOver())) {
+      this.state = GameState.finished;
+      return;
     }
 
     if (this.current.isComputer) {
@@ -103,7 +110,7 @@ export class AppComponent {
         setTimeout(() => {
           this.fire(random);
           this.changeDetector.detectChanges();
-        }, 1000);
+        }, 500);
       }
     }
   }
@@ -140,42 +147,37 @@ export class AppComponent {
     return null;
   }
 
-  public onDrop($event) {
-    $event.preventDefault();
-  }
-  public onDragOver($event) {
-    $event.stopPropagation();
-    $event.preventDefault();
-  }
+  private createBattlefield(): Field[] {
+    const fields = [];
 
-  private clearFields(fields: Field[]) {
-    for (let i = 0; i < FIELD_LENGTH * FIELD_LENGTH; i++) {
+    for (let i = 0; i < FIELD_RANGE; i++) {
       fields[i] = new Field();
     }
+
+    return fields;
   }
 
-  private placeShips(field: Field[]) {
+  private placeShips(): Field[] {
     this.loading$.next(true);
 
-    setTimeout(() => {
-      this.clearFields(field);
+    const fields = this.createBattlefield();
 
-      SHIPS.forEach((ship) => {
-        const rotate = Math.random() < 0.5;
-        const direction = rotate ? Direction.horizontal : Direction.vertical;
-        this.placeShip(field, { ...ship, direction });
-      });
-
-      this.loading$.next(false);
+    SHIPS.forEach((ship) => {
+      const rotate = Math.random() < 0.5;
+      const direction = rotate ? Direction.horizontal : Direction.vertical;
+      this.placeShip(fields, { ...ship, direction });
     });
+
+    this.loading$.next(false);
+
+    return fields;
   }
 
-  private placeShip(field: Field[], ship: Ship) {
-    const range = field.length;
+  private placeShip(fields: Field[], ship: Ship) {
     const { direction, length } = ship;
 
     while (true) {
-      const random = Math.floor(Math.random() * range);
+      const random = Math.floor(Math.random() * FIELD_RANGE);
       const row = Math.floor(random / FIELD_LENGTH);
       const isHorizontal = direction === Direction.horizontal;
       const step = isHorizontal ? 1 : FIELD_LENGTH;
@@ -186,12 +188,12 @@ export class AppComponent {
       for (let i = 0; i < length; i++) {
         const index = random + i * step;
 
-        if (index >= range) {
+        if (index >= FIELD_RANGE) {
           isValidPlace = false;
           break;
         }
 
-        if (field[index] != null && field[index].ship != null) {
+        if (fields[index] != null && fields[index].ship != null) {
           isValidPlace = false;
           break;
         }
@@ -211,7 +213,7 @@ export class AppComponent {
           const isStart = i == 0;
           const isEnd = i == length - 1;
 
-          field[index] = new Field(ship, isStart, isEnd);
+          fields[index] = new Field(ship, isStart, isEnd);
         }
 
         return true;

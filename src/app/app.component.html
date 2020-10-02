@@ -72,22 +72,22 @@
         color="secondary"
         (click)="randomize()"
       >
-        Randomize
+        <mat-icon>shuffle</mat-icon> Randomize
       </button>
       <button mat-button mat-raised-button color="primary" (click)="start()">
-        Start
+        <mat-icon>play_arrow</mat-icon> Start
       </button>
     </ng-container>
 
     <ng-container *ngIf="state == 'playing'">
       <button mat-button mat-raised-button color="warn" (click)="resign()">
-        Resign
+        <mat-icon>outlined_flag</mat-icon> Resign
       </button>
     </ng-container>
 
     <ng-container *ngIf="state == 'finished'">
       <button mat-button mat-raised-button color="primary" (click)="restart()">
-        Play again
+        <mat-icon>replay</mat-icon> Play again
       </button>
     </ng-container>
   </div>
