@@ -28,8 +28,19 @@ export class Field {
   public sunk: boolean;
 
   constructor(
+    public index: number,
     public ship?: Ship,
     public isStart: boolean = false,
     public isEnd: boolean = false
   ) {}
 }
+
+export const SHIPS: Ship[] = [
+  new Ship(ShipType.carrier),
+  new Ship(ShipType.battleship),
+  new Ship(ShipType.cruiser),
+  new Ship(ShipType.cruiser),
+  new Ship(ShipType.submarine),
+  new Ship(ShipType.submarine),
+  new Ship(ShipType.submarine),
+];

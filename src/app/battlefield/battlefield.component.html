@@ -1,0 +1,18 @@
+<div class="battlefield">
+  <ng-container *ngFor="let field of battlefield; trackBy: byIndex">
+    <div
+      *ngIf="field.ship"
+      class="field {{ field.ship }} {{ field.ship?.direction }}"
+      [class.start]="field.isStart"
+      [class.end]="field.isEnd"
+      [class.taken]="field.ship"
+      [class.sunk]="field.ship?.sunk"
+      (drop)="onDrop($event)"
+      (dragover)="onDragOver($event)"
+      draggable="true"
+    >
+      <div [class.hit]="field.hit"></div>
+    </div>
+    <div *ngIf="!field.ship" [class.miss]="field.hit" class="field"></div>
+  </ng-container>
+</div>
