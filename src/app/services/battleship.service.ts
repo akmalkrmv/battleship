@@ -21,7 +21,6 @@ export class BattleshipService {
   }
 
   public async placeShips(): Promise<Field[]> {
-    console.log('placing ships');
     this.loading$.next(true);
 
     return new Promise((resolve) => {
@@ -31,7 +30,6 @@ export class BattleshipService {
         SHIPS.forEach((ship) => {
           const rotate = Math.random() < 0.5;
           const direction = rotate ? Direction.horizontal : Direction.vertical;
-          console.log('placing ship: ', ship.name);
           this.placeShip(fields, { ...ship, direction });
         });
 

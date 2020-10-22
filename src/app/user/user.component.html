@@ -1,0 +1,16 @@
+<div class="user">
+  <ng-container *ngIf="user; else anonymous">
+    <div class="user-photo">
+      <img *ngIf="user.photoURL" [src]="user.photoURL" />
+      <mat-icon *ngIf="!user.photoURL">person</mat-icon>
+    </div>
+    <span>{{ user.displayName }}</span>
+  </ng-container>
+</div>
+
+<ng-template #anonymous>
+  <div class="user-photo">
+    <mat-icon>person</mat-icon>
+  </div>
+  <span>Anonymous</span>
+</ng-template>

@@ -6,76 +6,83 @@
   <h1>Battleship</h1>
 </div>
 
-<div class="container state-{{ state }}">
-  <div>
-    <div class="player-info">
-      {{ user.name }} <span *ngIf="winner === user">(winner)</span>
-    </div>
+<div class="container players">
+  <ng-container *ngIf="match">
+    <app-user [user]="match.creator"></app-user>
+    <app-user [user]="match.opponent"></app-user>
+  </ng-container>
+</div>
 
-    <app-battlefield
-      [class.current]="current !== user"
-      [battlefield]="user.battlefield"
-      (fired)="fire($event)"
-    ></app-battlefield>
-  </div>
-  <div>
-    <div class="player-info">
-      {{ opponent.name }} <span *ngIf="winner === opponent">(winner)</span>
+<ng-container *ngIf="user">
+  <div class="container state-{{ state }}">
+    <div>
+      <app-battlefield
+        [class.current]="current !== user"
+        [battlefield]="user.battlefield"
+        (fired)="fire($event)"
+      ></app-battlefield>
     </div>
-    <div
-      class="battlefield opponent-field"
-      [class.current]="current !== opponent"
-    >
-      <ng-container *ngFor="let field of opponent.battlefield">
-        <div
-          *ngIf="field.ship as ship"
-          class="field {{ ship.sunk ? ship.name : '' }} 
+    <div>
+      <div
+        class="battlefield opponent-field"
+        [class.current]="current !== opponent"
+      >
+        <ng-container *ngFor="let field of opponent.battlefield">
+          <div
+            *ngIf="field.ship as ship"
+            class="field {{ ship.sunk ? ship.name : '' }} 
         {{ ship.sunk ? ship.direction : '' }}"
-          [class.taken]="ship.sunk"
-          [class.sunk]="ship.sunk"
-          [class.start]="ship.sunk && field.isStart"
-          [class.end]="ship.sunk && field.isEnd"
-          (click)="current === user && fire(field)"
+            [class.taken]="ship.sunk"
+            [class.sunk]="ship.sunk"
+            [class.start]="ship.sunk && field.isStart"
+            [class.end]="ship.sunk && field.isEnd"
+            (click)="current === user && fire(field)"
+          >
+            <div *ngIf="field.hit" [class.hit]="field.hit"></div>
+          </div>
+          <div
+            *ngIf="!field.ship"
+            class="field"
+            [class.miss]="field.hit"
+            (click)="current === user && fire(field)"
+          ></div>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="controls">
+      <ng-container *ngIf="state == 'preparing'">
+        <button
+          mat-button
+          mat-raised-button
+          color="secondary"
+          (click)="randomize()"
         >
-          <div *ngIf="field.hit" [class.hit]="field.hit"></div>
-        </div>
-        <div
-          *ngIf="!field.ship"
-          class="field"
-          [class.miss]="field.hit"
-          (click)="current === user && fire(field)"
-        ></div>
+          <mat-icon>shuffle</mat-icon> Randomize
+        </button>
+        <button mat-button mat-raised-button color="primary" (click)="start()">
+          <mat-icon>play_arrow</mat-icon> Start
+        </button>
+      </ng-container>
+
+      <ng-container *ngIf="state == 'playing'">
+        <button mat-button mat-raised-button color="warn" (click)="resign()">
+          <mat-icon>flag</mat-icon> Resign
+        </button>
+      </ng-container>
+
+      <ng-container *ngIf="state == 'finished'">
+        <button
+          mat-button
+          mat-raised-button
+          color="primary"
+          (click)="restart()"
+        >
+          <mat-icon>replay</mat-icon> Play again
+        </button>
       </ng-container>
     </div>
   </div>
-</div>
-
-<div class="container">
-  <div class="controls">
-    <ng-container *ngIf="state == 'preparing'">
-      <button
-        mat-button
-        mat-raised-button
-        color="secondary"
-        (click)="randomize()"
-      >
-        <mat-icon>shuffle</mat-icon> Randomize
-      </button>
-      <button mat-button mat-raised-button color="primary" (click)="start()">
-        <mat-icon>play_arrow</mat-icon> Start
-      </button>
-    </ng-container>
-
-    <ng-container *ngIf="state == 'playing'">
-      <button mat-button mat-raised-button color="warn" (click)="resign()">
-        <mat-icon>flag</mat-icon> Resign
-      </button>
-    </ng-container>
-
-    <ng-container *ngIf="state == 'finished'">
-      <button mat-button mat-raised-button color="primary" (click)="restart()">
-        <mat-icon>replay</mat-icon> Play again
-      </button>
-    </ng-container>
-  </div>
-</div>
+</ng-container>

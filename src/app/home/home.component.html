@@ -1,0 +1,15 @@
+<div class="home-container">
+  <div class="home-header">
+    <ng-container *ngIf="auth.user$ | async as user; else login">
+      <button mat-raised-button (click)="createMatch()">Create match</button>
+    </ng-container>
+    <button mat-raised-button>Play against PC</button>
+  </div>
+  <div class="matches">
+    <app-matches [user]="auth.user$ | async"></app-matches>
+  </div>
+</div>
+
+<ng-template #login>
+  <button mat-raised-button routerLink="/login">Login</button>
+</ng-template>

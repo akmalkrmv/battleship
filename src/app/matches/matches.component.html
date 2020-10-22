@@ -1,0 +1,13 @@
+<div>
+  <ng-container *ngFor="let match of matches$ | async">
+    <div class="match-item">
+      <!-- <pre>{{ match | json }}</pre> -->
+      <app-user [user]="match.creator"></app-user>
+      <div class="match-actions">
+        <button mat-raised-button color="primary" (click)="joinMatch(match.id)">
+          Join
+        </button>
+      </div>
+    </div>
+  </ng-container>
+</div>

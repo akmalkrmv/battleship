@@ -4,9 +4,14 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
 } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { filter } from 'rxjs/operators';
+import { Match } from '../models/match';
 import { Player } from '../models/player';
 import { Field } from '../models/ship';
+import { AuthService } from '../services/auth.service';
 import { BattleshipService } from '../services/battleship.service';
+import { MatchService } from '../services/match.service';
 
 export enum GameState {
   preparing = 'preparing',
@@ -28,19 +33,32 @@ export class BattleshipComponent implements OnInit {
   public user: Player;
   public opponent: Player;
   public winner: Player;
+  public match: Match;
 
   constructor(
+    public auth: AuthService,
+    private activatedRoute: ActivatedRoute,
     private battleship: BattleshipService,
+    private matchService: MatchService,
     private changeDetector: ChangeDetectorRef
   ) {}
 
   ngOnInit() {
-    this.user = new Player('Player');
-    this.opponent = new Player('PC', true);
-    this.players = [this.user, this.opponent];
-    this.current = this.user;
+    this.loading$.next(true);
+    this.activatedRoute.paramMap
+      .pipe(filter((params) => !!params.get('id')))
+      .subscribe(async (params) => {
+        this.match = await this.matchService.getMatch(params.get('id'));
 
-    this.prepare();
+        this.user = new Player(this.match.creator.displayName);
+        this.opponent = new Player(this.match.opponent.displayName);
+        this.players = [this.user, this.opponent];
+        this.current = this.user;
+
+        this.prepare();
+        this.loading$.next(false);
+        this.changeDetector.markForCheck();
+      });
   }
 
   public onDrop($event) {

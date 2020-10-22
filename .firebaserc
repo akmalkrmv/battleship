@@ -1,5 +1,14 @@
 {
   "projects": {
     "default": "battleship-uno"
+  },
+  "targets": {
+    "battleship-uno": {
+      "hosting": {
+        "battleship": [
+          "battleship-uno"
+        ]
+      }
+    }
   }
 }
