@@ -3,8 +3,10 @@ import {
   OnInit,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
+  OnDestroy,
 } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { untilDestroyed } from 'ngx-take-until-destroy';
 import { filter } from 'rxjs/operators';
 import { Match } from '../models/match';
 import { Player } from '../models/player';
@@ -25,7 +27,7 @@ export enum GameState {
   styleUrls: ['./battleship.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class BattleshipComponent implements OnInit {
+export class BattleshipComponent implements OnInit, OnDestroy {
   public loading$ = this.battleship.loading$;
   public state: GameState = GameState.preparing;
   public players: Player[] = [];
@@ -43,21 +45,37 @@ export class BattleshipComponent implements OnInit {
     private changeDetector: ChangeDetectorRef
   ) {}
 
+  ngOnDestroy() {}
+
   ngOnInit() {
     this.loading$.next(true);
     this.activatedRoute.paramMap
       .pipe(filter((params) => !!params.get('id')))
       .subscribe(async (params) => {
-        this.match = await this.matchService.getMatch(params.get('id'));
-
-        this.user = new Player(this.match.creator.displayName);
-        this.opponent = new Player(this.match.opponent.displayName);
-        this.players = [this.user, this.opponent];
-        this.current = this.user;
-
-        this.prepare();
         this.loading$.next(false);
-        this.changeDetector.markForCheck();
+
+        this.matchService
+          .matchChanged(params.get('id'))
+          .pipe(untilDestroyed(this))
+          .subscribe((match) => {
+            console.log(match);
+            this.match = match;
+            this.user = new Player(this.match.creator.displayName);
+            this.opponent = new Player('waiting..');
+            this.players = [this.user, this.opponent];
+            this.current = this.user;
+
+            if (match.opponent) {
+              this.loading$.next(true);
+              this.opponent = new Player(this.match.opponent.displayName);
+              this.players = [this.user, this.opponent];
+
+              this.prepare();
+              this.loading$.next(false);
+            }
+
+            this.changeDetector.markForCheck();
+          });
       });
   }
 

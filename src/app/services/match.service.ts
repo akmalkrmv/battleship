@@ -1,32 +1,21 @@
 import { Injectable } from '@angular/core';
 import { AngularFirestore } from '@angular/fire/firestore';
-import { promise } from 'protractor';
+import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Match } from '../models/match';
+import { Match, MatchState } from '../models/match';
 import { User } from '../models/user';
 
-export enum MatchState {
-  open,
-  closed,
-}
-
-@Injectable({
-  providedIn: 'root',
-})
+@Injectable({ providedIn: 'root' })
 export class MatchService {
   constructor(private firestore: AngularFirestore) {}
 
   public openMatches(user: User) {
     return this.firestore
-      .collection<any>('matches', (ref) => {
-        let query = ref.where('state', '==', 0);
-
-        if (user) {
-          query = query.where('creator.uid', '!=', user.uid);
-        }
-
-        return query;
-      })
+      .collection<any>('matches', (ref) =>
+        ref
+          .where('state', '==', 0)
+          .where('creator.uid', '!=', user ? user.uid : 0)
+      )
       .snapshotChanges()
       .pipe(
         map((actions) =>
@@ -40,7 +29,11 @@ export class MatchService {
 
   public async getMatch(matchId: string): Promise<Match> {
     const doc = await this.firestore.doc(`matches/${matchId}`).ref.get();
-    return { id: doc.id, ...doc.data() };
+    return { id: doc.id, ...doc.data() } as Match;
+  }
+
+  public matchChanged(matchId: string): Observable<Match> {
+    return this.firestore.doc<Match>(`matches/${matchId}`).valueChanges();
   }
 
   public async createMatch(user: User) {

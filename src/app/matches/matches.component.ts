@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable } from 'rxjs';
 import { User } from '../models/user';
@@ -9,11 +9,13 @@ import { MatchService } from '../services/match.service';
   templateUrl: './matches.component.html',
   styleUrls: ['./matches.component.scss'],
 })
-export class MatchesComponent {
+export class MatchesComponent implements OnInit {
   @Input() user: User;
   public matches$: Observable<any>;
 
-  constructor(private matchService: MatchService, private router: Router) {
+  constructor(private matchService: MatchService, private router: Router) {}
+
+  ngOnInit() {
     this.matches$ = this.matchService.openMatches(this.user);
   }
 
