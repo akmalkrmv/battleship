@@ -5,5 +5,5 @@ export class Player {
   public ships: Ship[] = [];
   public battlefield: Field[] = [];
 
-  constructor(public name: string, public isComputer = false) {}
+  constructor(public displayName: string, public isComputer = false) {}
 }

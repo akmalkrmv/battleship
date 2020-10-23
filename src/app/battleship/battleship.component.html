@@ -3,86 +3,37 @@
 ></mat-progress-bar>
 
 <div class="container header">
-  <h1>Battleship</h1>
+  <h1><a routerLink="/">Battleship</a></h1>
 </div>
 
 <div class="container players">
-  <ng-container *ngIf="match">
+  <ng-container *ngIf="match$ | async as match">
     <app-user [user]="match.creator"></app-user>
     <app-user [user]="match.opponent"></app-user>
   </ng-container>
 </div>
 
-<ng-container *ngIf="user">
-  <div class="container state-{{ state }}">
-    <div>
+<div class="container state-{{ battleship.state$ | async }}">
+  <ng-container *ngIf="battleship.current$ | async as current">
+    <ng-container *ngIf="battleship.user$ | async as user">
       <app-battlefield
         [class.current]="current !== user"
         [battlefield]="user.battlefield"
-        (fired)="fire($event)"
+        (fired)="battleship.fire($event)"
       ></app-battlefield>
-    </div>
-    <div>
-      <div
-        class="battlefield opponent-field"
+    </ng-container>
+
+    <ng-container *ngIf="battleship.opponent$ | async as opponent">
+      <app-battlefield
         [class.current]="current !== opponent"
-      >
-        <ng-container *ngFor="let field of opponent.battlefield">
-          <div
-            *ngIf="field.ship as ship"
-            class="field {{ ship.sunk ? ship.name : '' }} 
-        {{ ship.sunk ? ship.direction : '' }}"
-            [class.taken]="ship.sunk"
-            [class.sunk]="ship.sunk"
-            [class.start]="ship.sunk && field.isStart"
-            [class.end]="ship.sunk && field.isEnd"
-            (click)="current === user && fire(field)"
-          >
-            <div *ngIf="field.hit" [class.hit]="field.hit"></div>
-          </div>
-          <div
-            *ngIf="!field.ship"
-            class="field"
-            [class.miss]="field.hit"
-            (click)="current === user && fire(field)"
-          ></div>
-        </ng-container>
-      </div>
-    </div>
-  </div>
+        [battlefield]="opponent.battlefield"
+        (fired)="battleship.fire($event)"
+      ></app-battlefield>
+    </ng-container>
+  </ng-container>
+</div>
 
-  <div class="container">
-    <div class="controls">
-      <ng-container *ngIf="state == 'preparing'">
-        <button
-          mat-button
-          mat-raised-button
-          color="secondary"
-          (click)="randomize()"
-        >
-          <mat-icon>shuffle</mat-icon> Randomize
-        </button>
-        <button mat-button mat-raised-button color="primary" (click)="start()">
-          <mat-icon>play_arrow</mat-icon> Start
-        </button>
-      </ng-container>
-
-      <ng-container *ngIf="state == 'playing'">
-        <button mat-button mat-raised-button color="warn" (click)="resign()">
-          <mat-icon>flag</mat-icon> Resign
-        </button>
-      </ng-container>
-
-      <ng-container *ngIf="state == 'finished'">
-        <button
-          mat-button
-          mat-raised-button
-          color="primary"
-          (click)="restart()"
-        >
-          <mat-icon>replay</mat-icon> Play again
-        </button>
-      </ng-container>
-    </div>
-  </div>
-</ng-container>
+<div class="container">
+  <app-controls class="controls" [state]="battleship.state$ | async">
+  </app-controls>
+</div>

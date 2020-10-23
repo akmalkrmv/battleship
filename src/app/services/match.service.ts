@@ -1,8 +1,10 @@
 import { Injectable } from '@angular/core';
 import { AngularFirestore } from '@angular/fire/firestore';
+import { promise } from 'protractor';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Match, MatchState } from '../models/match';
+import { Match, MatchMove, MatchState } from '../models/match';
+import { Field } from '../models/ship';
 import { User } from '../models/user';
 
 @Injectable({ providedIn: 'root' })
@@ -47,5 +49,25 @@ export class MatchService {
     return await this.firestore
       .doc(`matches/${matchId}`)
       .set({ opponent: user, state: MatchState.closed }, { merge: true });
+  }
+
+  public async sendShips(matchId: string, userId: string, ships: any[]): Promise<string> {
+    return await this.firestore
+      .collection<any>(`matches/${matchId}/ships`)
+      .add({ userId, ships })
+      .then((doc) => doc.id);
+  }
+
+  public async move(matchId: string, move: MatchMove): Promise<string> {
+    return await this.firestore
+      .collection<MatchMove>(`matches/${matchId}/moves`)
+      .add(move)
+      .then((doc) => doc.id);
+  }
+
+  public fires(matchId: string): Observable<MatchMove[]> {
+    return this.firestore
+      .collection<MatchMove>(`matches/${matchId}/moves`)
+      .valueChanges();
   }
 }
