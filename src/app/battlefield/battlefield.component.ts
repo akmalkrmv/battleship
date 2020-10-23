@@ -4,9 +4,11 @@ import {
   Component,
   EventEmitter,
   Input,
+  OnDestroy,
   OnInit,
   Output,
 } from '@angular/core';
+import { untilDestroyed } from 'ngx-take-until-destroy';
 import { Field } from '../models/ship';
 import { BattleshipService } from '../services/battleship.service';
 
@@ -16,7 +18,7 @@ import { BattleshipService } from '../services/battleship.service';
   styleUrls: ['./battlefield.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class BattlefieldComponent implements OnInit {
+export class BattlefieldComponent implements OnInit, OnDestroy {
   @Input() battlefield: Field[];
   @Output() fired = new EventEmitter();
 
@@ -25,8 +27,9 @@ export class BattlefieldComponent implements OnInit {
     private changeDetector: ChangeDetectorRef
   ) {}
 
+  ngOnDestroy(): void {}
   ngOnInit(): void {
-    this.battleship.fired$.subscribe(() => {
+    this.battleship.fired$.pipe(untilDestroyed(this)).subscribe(() => {
       this.changeDetector.markForCheck();
     });
   }
