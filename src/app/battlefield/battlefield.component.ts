@@ -31,12 +31,12 @@ export class BattlefieldComponent implements OnInit {
     });
   }
 
-  public onDrop($event) {
-    $event.preventDefault();
+  public onDrop(event) {
+    event.preventDefault();
   }
-  public onDragOver($event) {
-    $event.stopPropagation();
-    $event.preventDefault();
+  public onDragOver(event) {
+    event.stopPropagation();
+    event.preventDefault();
   }
 
   public fire(field: Field) {
