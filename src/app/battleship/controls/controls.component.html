@@ -1,0 +1,20 @@
+<ng-container *ngIf="state == 'preparing'">
+  <button mat-raised-button color="secondary" (click)="battleship.randomize()">
+    <mat-icon>shuffle</mat-icon> Randomize
+  </button>
+  <button mat-raised-button color="primary" (click)="battleship.start()">
+    <mat-icon>play_arrow</mat-icon> Start
+  </button>
+</ng-container>
+
+<ng-container *ngIf="state == 'playing'">
+  <button mat-raised-button color="warn" (click)="battleship.resign()">
+    <mat-icon>flag</mat-icon> Resign
+  </button>
+</ng-container>
+
+<ng-container *ngIf="state == 'finished'">
+  <button mat-raised-button color="primary" (click)="battleship.restart()">
+    <mat-icon>replay</mat-icon> Play again
+  </button>
+</ng-container>
