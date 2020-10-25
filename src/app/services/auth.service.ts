@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { Observable, of } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
+import { map, switchMap } from 'rxjs/operators';
 import { AngularFireAuth } from '@angular/fire/auth';
 import { AngularFirestore } from '@angular/fire/firestore';
 import { User } from '../models/user';
@@ -55,6 +55,10 @@ export class AuthService {
         },
       },
     });
+  }
+
+  public isSignedIn() {
+    return this.user$.pipe(map((user) => user != null));
   }
 
   public async signOut() {
