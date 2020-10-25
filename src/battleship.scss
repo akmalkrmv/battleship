@@ -1,20 +1,17 @@
 // variablse
 $ship-margin: 3px;
 $ship-radius: 100%;
-
-:root {
-  --hit-size: 3vmin;
-  --field-size: 4.6vmin;
-}
+$hit-size: 3vmin;
+$field-size: 4.6vmin;
 
 // media
 @media only screen and (max-width: 600px) {
   .hit,
   .miss {
-    --hit-size: 4vmin !important;
+    $hit-size: 4vmin !important;
   }
   .battlefield {
-    --field-size: 7vmin !important;
+    $field-size: 7vmin !important;
   }
   .header {
     display: none !important;
@@ -92,13 +89,13 @@ h1 {
 }
 
 .battlefield {
-  --field-size: 4.6vmin;
+  $field-size: 4.6vmin;
   position: relative;
   margin: 2vmin;
   background-color: #00beff;
   display: grid;
-  grid-template-rows: repeat(10, var(--field-size));
-  grid-template-columns: repeat(10, var(--field-size));
+  grid-template-rows: repeat(10, $field-size);
+  grid-template-columns: repeat(10, $field-size);
   opacity: 1;
 
   .field {
@@ -113,7 +110,7 @@ h1 {
 
   .hit,
   .miss {
-    --hit-size: 2vmin;
+    $hit-size: 2vmin;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -125,8 +122,8 @@ h1 {
       position: absolute;
       background-color: #fff;
       border-radius: 100%;
-      width: var(--hit-size);
-      height: var(--hit-size);
+      width: $hit-size;
+      height: $hit-size;
     }
     &::before {
       animation: hit 0.3s ease-out forwards;
