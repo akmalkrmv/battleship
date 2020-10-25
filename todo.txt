@@ -1,0 +1,19 @@
+Battleship todo:
+
+create app
+add material 
+add firebase
+add firebase hosting
+
+create home page
+create login page
+create match list
+
+create auth service
+create matching service
+
+create battleship page
+create battleship service
+create ship generator
+
+
