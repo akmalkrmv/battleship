@@ -14,23 +14,17 @@
 </div>
 
 <div class="container state-{{ battleship.state$ | async }}">
-  <ng-container *ngIf="battleship.current$ | async as current">
-    <ng-container *ngIf="battleship.user$ | async as user">
-      <app-battlefield
-        [class.current]="current !== user"
-        [battlefield]="user.battlefield"
-        (fired)="battleship.fire($event)"
-      ></app-battlefield>
-    </ng-container>
+  <app-battlefield
+    [player]="battleship.user$ | async"
+    [current]="battleship.current$ | async"
+    (fired)="battleship.fire($event)"
+  ></app-battlefield>
 
-    <ng-container *ngIf="battleship.opponent$ | async as opponent">
-      <app-battlefield
-        [class.current]="current !== opponent"
-        [battlefield]="opponent.battlefield"
-        (fired)="battleship.fire($event)"
-      ></app-battlefield>
-    </ng-container>
-  </ng-container>
+  <app-battlefield
+    [player]="battleship.opponent$ | async"
+    [current]="battleship.current$ | async"
+    (fired)="battleship.fire($event)"
+  ></app-battlefield>
 </div>
 
 <div class="container">

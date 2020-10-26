@@ -1,11 +1,11 @@
-<div class="battlefield">
-  <ng-container *ngFor="let field of battlefield; trackBy: byIndex">
+<div class="battlefield" [class.current]="current !== player">
+  <ng-container *ngFor="let field of player?.battlefield; trackBy: byIndex">
     <div
       *ngIf="field.ship"
       class="field {{ field.ship }} {{ field.ship?.direction }}"
-      [class.start]="field.isStart"
-      [class.end]="field.isEnd"
       [class.taken]="field.ship"
+      [class.start]="field.ship?.isStart"
+      [class.end]="field.ship?.isEnd"
       [class.sunk]="field.ship?.sunk"
       (drop)="onDrop($event)"
       (dragover)="onDragOver($event)"

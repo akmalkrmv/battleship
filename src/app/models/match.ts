@@ -1,6 +1,7 @@
 import { User } from './user';
 
 export enum GameState {
+  waiting = 'waiting',
   preparing = 'preparing',
   playing = 'playing',
   finished = 'finished',
@@ -20,5 +21,5 @@ export interface Match {
 
 export interface MatchMove {
   userId: string;
-  fieldIndex: string;
+  data: any;
 }

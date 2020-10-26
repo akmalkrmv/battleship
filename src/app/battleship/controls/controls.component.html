@@ -1,9 +1,13 @@
+<ng-container *ngIf="state == 'waiting'">
+  <mat-icon>cached</mat-icon> Waiting people to join
+</ng-container>
+
 <ng-container *ngIf="state == 'preparing'">
   <button mat-raised-button color="secondary" (click)="battleship.randomize()">
     <mat-icon>shuffle</mat-icon> Randomize
   </button>
   <button mat-raised-button color="primary" (click)="battleship.start()">
-    <mat-icon>play_arrow</mat-icon> Start
+    <mat-icon>play_arrow</mat-icon> Ready
   </button>
 </ng-container>
 
