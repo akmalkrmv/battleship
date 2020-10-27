@@ -1,18 +1,25 @@
 <div class="battlefield" [class.current]="current !== player">
   <ng-container *ngFor="let field of player?.battlefield; trackBy: byIndex">
-    <div
-      *ngIf="field.ship"
-      class="field {{ field.ship }} {{ field.ship?.direction }}"
-      [class.taken]="field.ship"
-      [class.start]="field.ship?.isStart"
-      [class.end]="field.ship?.isEnd"
-      [class.sunk]="field.ship?.sunk"
-      (drop)="onDrop($event)"
-      (dragover)="onDragOver($event)"
-      draggable="true"
-    >
-      <div [class.hit]="field.hit"></div>
-    </div>
-    <div *ngIf="!field.ship" [class.miss]="field.hit" class="field"></div>
+    <ng-container *ngIf="isVisible || field.ship?.sunk">
+      <div
+        *ngIf="field.ship as ship"
+        class="field taken {{ ship.name }} {{ ship.direction }}"
+        [class.start]="ship.isStart"
+        [class.end]="ship.isEnd"
+        [class.sunk]="ship.sunk"
+        (drop)="onDrop($event)"
+        (dragover)="onDragOver($event)"
+        draggable="true"
+      >
+        <div [class.hit]="field.hit"></div>
+      </div>
+      <div *ngIf="!field.ship" class="field" [class.miss]="field.hit"></div>
+    </ng-container>
+
+    <ng-container *ngIf="!isVisible">
+      <div class="field" [class.miss]="field.hit && !field.ship">
+        <div [class.hit]="field.hit && field.ship"></div>
+      </div>
+    </ng-container>
   </ng-container>
 </div>

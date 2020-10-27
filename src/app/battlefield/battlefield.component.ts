@@ -1,18 +1,11 @@
 import {
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
   Component,
   EventEmitter,
   Input,
-  OnChanges,
-  OnDestroy,
-  OnInit,
   Output,
-  SimpleChanges,
 } from '@angular/core';
-import { untilDestroyed } from 'ngx-take-until-destroy';
-import { Field } from '@models/ship';
-import { BattleshipService } from '@services/battleship.service';
+import { Field } from '@models/field';
 import { Player } from '@models/player';
 
 @Component({
@@ -21,26 +14,13 @@ import { Player } from '@models/player';
   styleUrls: ['./battlefield.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class BattlefieldComponent implements OnInit, OnDestroy, OnChanges {
+export class BattlefieldComponent {
   @Input() player: Player;
   @Input() current: Player;
+  @Input() isVisible = true;
   @Output() fired = new EventEmitter();
 
-  constructor(
-    private battleship: BattleshipService,
-    private changeDetector: ChangeDetectorRef
-  ) {}
-
-  ngOnChanges(changes: SimpleChanges): void {
-    console.log(this.player);
-  }
-
-  ngOnDestroy(): void {}
-  ngOnInit(): void {
-    // this.battleship.fired$.pipe(untilDestroyed(this)).subscribe(() => {
-    //   this.changeDetector.markForCheck();
-    // });
-  }
+  constructor() {}
 
   public onDrop(event) {
     event.preventDefault();

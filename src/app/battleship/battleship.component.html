@@ -7,20 +7,19 @@
 </div>
 
 <div class="container players">
-  <ng-container *ngIf="match$ | async as match">
-    <app-user [user]="match.creator"></app-user>
-    <app-user [user]="match.opponent"></app-user>
-  </ng-container>
+  <app-user [user]="battleship.player$ | async"></app-user>
+  <app-user [user]="battleship.opponent$ | async"></app-user>
 </div>
 
 <div class="container state-{{ battleship.state$ | async }}">
   <app-battlefield
-    [player]="battleship.user$ | async"
+    [player]="battleship.player$ | async"
     [current]="battleship.current$ | async"
     (fired)="battleship.fire($event)"
   ></app-battlefield>
 
   <app-battlefield
+    [isVisible]="false"
     [player]="battleship.opponent$ | async"
     [current]="battleship.current$ | async"
     (fired)="battleship.fire($event)"
