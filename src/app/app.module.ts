@@ -17,13 +17,13 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { BattleshipComponent } from './battleship/battleship.component';
-import { BattlefieldComponent } from './battlefield/battlefield.component';
+import { BattlefieldComponent } from './battleship/battlefield/battlefield.component';
+import { ControlsComponent } from './battleship/controls/controls.component';
 
 import { UserComponent } from './user/user.component';
 import { HomeComponent } from './home/home.component';
 import { MatchesComponent } from './matches/matches.component';
 import { LoginComponent } from './auth/login/login.component';
-import { ControlsComponent } from './battleship/controls/controls.component';
 
 @NgModule({
   declarations: [
