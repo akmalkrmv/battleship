@@ -17,3 +17,5 @@ create battleship service
 create ship generator
 
 
+matches/{matchId}/players/{playerid}/ships/{shipId}/
+matches/{matchId}/players/{playerid}/moves/{moveId}/

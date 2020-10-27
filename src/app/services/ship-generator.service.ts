@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { ROW_RANGE, FIELD_RANGE } from '@constants/fields';
 import { SHIPS } from '@constants/ships';
-import { Direction, Field, Ship } from '@models/ship';
+import { Direction, Ship } from '@models/ship';
+import { Field } from "@models/field";
 
 // helper functions
 const getRandomPostion = (): number => Math.floor(Math.random() * FIELD_RANGE);
@@ -64,8 +65,6 @@ export class ShipGenerator {
 
       if (canPlaceShip) {
         this.placeShip(collection, position, ship);
-
-        console.log(`trycount: ${trycount}`);
         return;
       }
     }

@@ -20,8 +20,8 @@ export class HomeComponent implements OnInit {
 
   public createMatch() {
     this.auth.user$.pipe(first()).subscribe(async (user) => {
-      const match = await this.matchService.createMatch(user);
-      this.router.navigate([`match/${match.id}`]);
+      const id = await this.matchService.createMatch(user);
+      this.router.navigate([`match/${id}`]);
     });
   }
 }
