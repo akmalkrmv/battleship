@@ -1,3 +1,4 @@
+
 export enum Direction {
   horizontal = 'horizontal',
   vertical = 'vertical',
@@ -24,11 +25,4 @@ export class Ship {
     this.name = ShipType[type];
     this.length = type;
   }
-}
-
-export class Field {
-  public hit: boolean;
-  public sunk: boolean;
-
-  constructor(public index: number, public ship?: Ship) {}
 }

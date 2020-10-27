@@ -1,25 +1,22 @@
 import { User } from './user';
 
 export enum GameState {
+  open = 'open',
   waiting = 'waiting',
   preparing = 'preparing',
   playing = 'playing',
   finished = 'finished',
-}
-
-export enum MatchState {
-  open,
-  closed,
+  closed = 'closed',
 }
 
 export interface Match {
   id: string;
-  state: MatchState;
+  state: GameState;
   creator?: User;
   opponent?: User;
 }
 
-export interface MatchMove {
+export interface Move {
   userId: string;
   data: any;
 }
