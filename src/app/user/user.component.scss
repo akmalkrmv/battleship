@@ -3,7 +3,13 @@
   align-items: center;
   gap: 10px;
   color: #fff;
-  margin: 10px;
+  font-size: 1.1rem;
+  
+  &.winner {
+    .user-name {
+      font-weight: bold;
+    }
+  }
 
   .user-photo {
     background-color: #00beff;

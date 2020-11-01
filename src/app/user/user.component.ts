@@ -9,4 +9,5 @@ import { User } from '../models/user';
 })
 export class UserComponent {
   @Input() user: User = null;
+  @Input() winner: string = null;
 }

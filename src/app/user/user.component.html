@@ -1,10 +1,11 @@
-<div class="user">
+<div class="user" [class.winner]="winner === user?.uid">
   <ng-container *ngIf="user; else anonymous">
     <div class="user-photo">
       <img *ngIf="user.photoURL" [src]="user.photoURL" />
       <mat-icon *ngIf="!user.photoURL">person</mat-icon>
     </div>
-    <span>{{ user.displayName }}</span>
+    <span class="user-name">{{ user.displayName }}</span>
+    <span *ngIf="winner && winner === user?.uid"> is winner!</span>
   </ng-container>
 </div>
 
