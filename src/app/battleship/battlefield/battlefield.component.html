@@ -1,5 +1,9 @@
-<div class="battlefield" [class.current]="current !== player">
-  <ng-container *ngFor="let field of player?.battlefield; trackBy: byIndex">
+<div
+  class="battlefield"
+  [class.clickable]="isClickable"
+  [class.active]="current !== player?.uid"
+>
+  <ng-container *ngFor="let field of battlefield; trackBy: byIndex">
     <ng-container *ngIf="isVisible || field.ship?.sunk">
       <div
         *ngIf="field.ship as ship"
@@ -7,17 +11,18 @@
         [class.start]="ship.isStart"
         [class.end]="ship.isEnd"
         [class.sunk]="ship.sunk"
-        (drop)="onDrop($event)"
-        (dragover)="onDragOver($event)"
-        draggable="true"
       >
         <div [class.hit]="field.hit"></div>
       </div>
       <div *ngIf="!field.ship" class="field" [class.miss]="field.hit"></div>
     </ng-container>
 
-    <ng-container *ngIf="!isVisible">
-      <div class="field" [class.miss]="field.hit && !field.ship">
+    <ng-container *ngIf="!isVisible && !field.ship?.sunk">
+      <div
+        class="field"
+        [class.miss]="field.hit && !field.ship"
+        (click)="fire(field)"
+      >
         <div [class.hit]="field.hit && field.ship"></div>
       </div>
     </ng-container>

@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { ROW_RANGE, FIELD_RANGE } from '@constants/fields';
 import { SHIPS } from '@constants/ships';
-import { Direction, Ship } from '@models/ship';
-import { Field } from "@models/field";
+import { Direction, Ship, ShipsMap } from '@models/ship';
+import { Field } from '@models/field';
 
 // helper functions
 const getRandomPostion = (): number => Math.floor(Math.random() * FIELD_RANGE);
@@ -26,34 +26,34 @@ export class ShipGenerator {
     return Array.from({ length: FIELD_RANGE }, () => null);
   }
 
+  public static createEmptyBattlefield(): Field[] {
+    return Array.from({ length: FIELD_RANGE }, (_, k) => new Field(k, null));
+  }
+
   public static wrapWithFields(ships: Ship[]): Field[] {
     return ships.map((ship, index) => new Field(index, ship));
   }
 
-  // ships to place: [5, 4, 3, 3, 2, 2, 2]
-  // [
-  //  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-  //  0,  0,  0,  5,  0,  0,  0,  0,  0,  0,
-  //  0,  0,  0,  5,  0,  4,  4,  4,  4,  0,
-  //  0,  3,  0,  5,  0,  0,  0,  0,  0,  0,
-  //  0,  3,  0,  5,  0,  0,  0,  0,  0,  0,
-  //  0,  3,  0,  5,  0,  0,  3,  3,  3,  0,
-  //  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-  //  0,  0,  0,  2,  2,  0,  0,  0,  2,  0,
-  //  0,  0,  0,  0,  0,  0,  0,  0,  2,  0,
-  //  0,  0,  2,  2,  0,  0,  0,  0,  0,  0,
-  // ]
-  public static placeRandomShips(collection: Ship[]): Ship[] {
-    const fieldsCopy = [...collection];
+  public static convertToMap(ships: Ship[]): ShipsMap {
+    return ships.reduce((map, ship, index) => {
+      if (ship) map[index] = ship;
+      return map;
+    }, {});
+  }
+
+  public static placeRandomShips(collection?: Ship[]): Ship[] {
+    collection = collection
+      ? [...collection]
+      : this.createEmptyShipCollection();
 
     SHIPS.forEach((ship: Ship) => {
       const direction = getRandomDirection();
       const shipCopy = { ...ship, direction };
 
-      this.tryPlaceShip(fieldsCopy, shipCopy);
+      this.tryPlaceShip(collection, shipCopy);
     });
 
-    return fieldsCopy;
+    return collection;
   }
 
   private static tryPlaceShip(collection: Ship[], ship: Ship) {

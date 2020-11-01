@@ -1,13 +1,15 @@
-import { EventEmitter, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { BehaviorSubject, combineLatest, of } from 'rxjs';
-import { switchMap, switchMapTo } from 'rxjs/operators';
+import { BehaviorSubject, combineLatest, of, Subscription } from 'rxjs';
+import { distinctUntilChanged, filter, switchMap } from 'rxjs/operators';
 
-import { Field } from '@models/field';
-import { GameState, Match } from '@models/match';
+import { User } from '@models/user';
 import { Player } from '@models/player';
-import { MatchService } from './match.service';
+import { GameState, Match, Move } from '@models/match';
+import { Field } from '@models/field';
+import { ShipPlacement, ShipsMap } from '@models/ship';
 import { ShipGenerator } from './ship-generator.service';
+import { MatchService } from './match.service';
 import { AuthService } from './auth.service';
 
 @Injectable({ providedIn: 'root' })
@@ -16,19 +18,18 @@ export class BattleshipService {
 
   public player$ = new BehaviorSubject<Player>(null);
   public opponent$ = new BehaviorSubject<Player>(null);
-  public current$ = new BehaviorSubject<Player>(null);
-  public winner$ = new BehaviorSubject<Player>(null);
+  public current$ = new BehaviorSubject<string>(null);
+  public winner$ = new BehaviorSubject<string>(null);
 
   public match$ = new BehaviorSubject<Match>(null);
   public state$ = new BehaviorSubject(GameState.waiting);
-  public ready$ = new EventEmitter();
-  public fired$ = new EventEmitter();
+  public ready$ = new BehaviorSubject(false);
+  public round$ = new BehaviorSubject(0);
 
-  private players: Player[] = [];
-  private player: Player = null;
-  private opponent: Player = null;
-  private current: Player = null;
-  private winner: Player = null;
+  public ships$ = new BehaviorSubject<ShipPlacement[]>([]);
+  public moves$ = new BehaviorSubject<Move[]>([]);
+
+  private initializing: boolean = true;
 
   constructor(
     private router: Router,
@@ -37,35 +38,66 @@ export class BattleshipService {
   ) {}
 
   public init(matchId: string) {
+    this.initializing = true;
+    this.loading$.next(true);
+
     return combineLatest([
       this.matchService.matchChanges(matchId),
       this.authService.user$,
     ]).pipe(
-      switchMap(([match, user]) => {
-        console.log('matchChanges', match);
-        if (!match) {
+      switchMap(async ([match, user]) => {
+        if (!match || !match.exists || !this.hasAccess(match, user)) {
+          this.loading$.next(false);
           return this.router.navigate(['/']);
         }
 
-        this.match$.next({ id: matchId, ...match });
+        // console.log('matchChanges', match);
+        this.match$.next(match);
+        this.state$.next(match.state);
+        this.current$.next(match.current);
+        this.winner$.next(match.winner);
+        this.ready$.next(match.readyState && match.readyState[user.uid]);
+        this.round$.next(match.game);
 
-        const creator: boolean = user.uid === match.creator.uid;
-        this.player = Player.create(creator ? match.creator : match.opponent);
-        this.opponent = Player.create(creator ? match.opponent : match.creator);
-        this.player$.next(this.player);
-        this.opponent$.next(this.opponent);
-        this.players = [this.player, this.opponent];
+        if (this.initializing) {
+          this.initializing = false;
+          this.setPlayers(user, match);
+          this.checkForGameOver();
+          this.loading$.next(false);
+        }
 
-        this.prepare();
-        this.randomize();
+        if (match.state == GameState.open) {
+          if (!match.opponent && user.uid !== match.creator.uid) {
+            match = await this.joinMatch({ id: matchId, ...match }, user);
+            this.setPlayers(user, match);
+          }
 
-        if (this.opponent.uid) {
-          this.matchService
-            .playerChanges(matchId, this.opponent.uid)
-            .subscribe((opponent) => {
-              this.opponent.battlefield = Field.fromJSON(opponent.ships);
-              this.opponent$.next({ ...this.opponent });
-            });
+          return of(match);
+        }
+
+        if (match.state == GameState.preparing) {
+          if (!match.readyState) {
+            this.setPlayers(user, match);
+            this.randomize();
+          } else {
+            const player = this.player$.value;
+            const opponent = this.opponent$.value;
+
+            if (
+              match.readyState[player.uid] &&
+              match.readyState[opponent.uid]
+            ) {
+              await this.setState(GameState.playing);
+              await this.nextPlayer();
+              return of(match);
+            }
+          }
+
+          return of(match);
+        }
+
+        if (match.state == GameState.playing) {
+          return of(match);
         }
 
         return of(match);
@@ -73,26 +105,122 @@ export class BattleshipService {
     );
   }
 
-  public async start() {
-    const { id } = this.match$.value;
-    const player = this.player$.value;
+  private hasAccess(match: Match, user: User): boolean {
+    if (!match) return false;
+    if (!match.creator || !match.opponent) return true;
+    if (user.uid === match.creator.uid) return true;
+    if (user.uid === match.opponent.uid) return true;
 
-    await this.matchService.updatePlayer(id, {
-      uid: player.uid,
-      ships: Field.toJSON(player.battlefield),
+    return false;
+  }
+
+  private async joinMatch(match: Match, opponent: User): Promise<Match> {
+    const update = { ...match, opponent, state: GameState.preparing };
+    await this.matchService.updateMatch(update);
+    return update;
+  }
+
+  public setPlayers(user: User, match: Match) {
+    const creator: boolean = user.uid === match.creator.uid;
+    this.player$.next(Player.create(creator ? match.creator : match.opponent));
+    this.opponent$.next(
+      Player.create(creator ? match.opponent : match.creator)
+    );
+  }
+
+  public getPlayer(uid: string): Player {
+    if (!uid) return null;
+    const player = this.player$.value;
+    const opponent = this.opponent$.value;
+    return uid === player?.uid ? player : opponent;
+  }
+  public getOpponent(uid: string): Player {
+    if (!uid) return null;
+    const player = this.player$.value;
+    const opponent = this.opponent$.value;
+    return uid === player?.uid ? opponent : player;
+  }
+
+  public async start() {
+    const match = this.match$.value;
+    const player = this.player$.value;
+    const readyState = { ...match.readyState, [player.uid]: true };
+    await this.matchService.updateMatch({ ...match, readyState });
+  }
+
+  public async resign() {
+    const match = this.match$.value;
+    const opponent = this.opponent$.value;
+    await this.setWinner(match, opponent.uid);
+  }
+
+  public async restart() {
+    const match = this.match$.value;
+    await this.matchService.updateMatch({
+      ...match,
+      winner: null,
+      readyState: null,
+      state: GameState.preparing,
+      game: match.game + 1,
+    });
+  }
+
+  public async setState(state: GameState) {
+    const match = this.match$.value;
+    if (match.state === state) return;
+    await this.matchService.updateMatch({ ...match, state });
+  }
+
+  public async fire(field: Field) {
+    if (this.state$.value !== GameState.playing) return;
+    if (this.current$.value !== this.player$.value.uid) return;
+
+    const match = this.match$.value;
+    const current = this.current$.value;
+    const opponent = this.getOpponent(current);
+
+    await this.matchService.move(match, {
+      player: opponent.uid,
+      index: field.index,
     });
 
-    this.state$.next(GameState.playing);
-    this.current$.next(this.player);
+    if (!field.ship) {
+      await this.nextPlayer();
+    }
+
+    // if ((this.winner = this.isGameOver())) {
+    //   this.state$.next(GameState.finished);
+    //   this.winner$.next(this.winner);
+    //   return;
+    // }
+
+    // if (this.opponent.isComputer && this.current === this.opponent.uid) {
+    //   let random = this.getRandomField(this.player.battlefield);
+    //   if (random) {
+    //     setTimeout(() => this.fire(random), 500);
+    //   }
+    // }
   }
-  public resign() {
-    this.winner$.next(this.opponent);
-    this.state$.next(GameState.finished);
+
+  private async nextPlayer() {
+    const match = this.match$.value;
+    const player = this.player$.value.uid;
+    const opponent = this.opponent$.value.uid;
+    const current = this.current$.value === player ? opponent : player;
+
+    this.current$.next(current);
+
+    await this.matchService.updateMatch({ ...match, current });
   }
-  public restart() {
-    this.winner$.next(null);
-    this.state$.next(GameState.preparing);
-    this.prepare();
+
+  public async randomize() {
+    const match = this.match$.value;
+    const player = this.player$.value.uid;
+    const shipsMap = ShipGenerator.convertToMap(
+      ShipGenerator.placeRandomShips()
+    );
+
+    await this.matchService.addShips(match, { player, shipsMap });
   }
 
   public getRandomField(fields: Field[]): Field {
@@ -102,96 +230,76 @@ export class BattleshipService {
     return nothit[random];
   }
 
-  public fire(field: Field) {
-    if (this.state$.value !== GameState.playing) return;
-    if (field.hit) return;
+  public checkForGameOver() {
+    let subs: Subscription[] = [];
 
-    field.hit = true;
-    this.fired$.emit();
+    this.round$.pipe(distinctUntilChanged()).subscribe((round) => {
+      const match = this.match$.value;
 
-    const { ship } = field;
-
-    if (ship) {
-      ship.hits++;
-      field.sunk = ship.sunk = ship.hits === ship.length;
-    } else {
-      this.nextPlayer();
-    }
-
-    if ((this.winner = this.isGameOver())) {
-      this.state$.next(GameState.finished);
-      this.winner$.next(this.winner);
-      return;
-    }
-
-    if (this.current.isComputer) {
-      let random = this.getRandomField(this.player.battlefield);
-      if (random) {
-        setTimeout(() => this.fire(random), 500);
+      if (subs) {
+        subs.forEach((sub) => sub.unsubscribe());
       }
-    }
-  }
 
-  private nextPlayer() {
-    const index = this.players.findIndex((player) => player === this.current);
-    const nextIndex = (index + 1) % this.players.length;
+      this.ships$.next([]);
+      this.moves$.next([]);
 
-    this.current = this.players[nextIndex];
-  }
+      subs = [
+        this.matchService
+          .shipsChanges(match)
+          .subscribe((ships) => this.ships$.next(ships)),
+        this.matchService
+          .moveChanges(match)
+          .subscribe((moves) => this.moves$.next(moves)),
+      ];
+    });
 
-  private isGameOver(): Player {
-    const isAllSunk = (player: Player) => {
-      return player.battlefield
-        .filter((field) => field.ship)
-        .every((field) => field.ship.sunk);
-    };
+    combineLatest([
+      this.match$,
+      this.player$,
+      this.opponent$,
+      this.ships$,
+      this.moves$,
+    ])
+      .pipe(
+        filter(([match]) => !!match && match.state === GameState.playing),
+        filter(([, player, opponent]) => !!player && !!opponent),
+        filter(([, , , ships, moves]) => !!ships && !!moves),
+        filter(([, , , ships, moves]) => !!ships.length && !!moves.length)
+      )
+      .subscribe(async ([match, player, opponent, ships, moves]) => {
+        const emptyMap = { shipsMap: null };
+        const getShipsMap = (uid: string): ShipsMap => {
+          const filtered = ships
+            .filter((s) => s.player === uid)
+            .sort((a, b) => (a.created < b.created ? -1 : 1));
 
-    if (isAllSunk(this.player)) {
-      return this.opponent;
-    }
+          return ((filtered || []).pop() || emptyMap).shipsMap;
+        };
 
-    if (isAllSunk(this.opponent)) {
-      return this.player;
-    }
+        const playerShips: ShipsMap = getShipsMap(player.uid);
+        const opponentShips: ShipsMap = getShipsMap(opponent.uid);
 
-    return null;
-  }
+        const isAllSunk = (map: ShipsMap) =>
+          map &&
+          Object.entries(map).every(
+            ([index, ship]) =>
+              !ship || !!moves.find((move) => move.index.toString() === index)
+          );
 
-  public prepare() {
-    this.state$.next(GameState.preparing);
-    this.emptyBattlefield(this.player$);
-    this.emptyBattlefield(this.opponent$);
-  }
-
-  public randomize() {
-    this.placeShips(this.player$);
-  }
-
-  public placeShips(player: BehaviorSubject<Player>) {
-    if (player && player.value) {
-      player.next({
-        ...player.value,
-        battlefield: this.getFieldsWithRandomShips(),
+        if (isAllSunk(playerShips)) {
+          await this.setWinner(match, opponent.uid);
+        } else if (isAllSunk(opponentShips)) {
+          await this.setWinner(match, player.uid);
+        }
       });
-    }
   }
 
-  public emptyBattlefield(player: BehaviorSubject<Player>) {
-    if (player && player.value) {
-      player.next({ ...player.value, battlefield: this.getEmptyFileds() });
-    }
-  }
-
-  public getFieldsWithRandomShips(): Field[] {
-    const emptyCollection = ShipGenerator.createEmptyShipCollection();
-    const randomShips = ShipGenerator.placeRandomShips(emptyCollection);
-    const fields = ShipGenerator.wrapWithFields(randomShips);
-    return fields;
-  }
-
-  public getEmptyFileds(): Field[] {
-    const emptyCollection = ShipGenerator.createEmptyShipCollection();
-    const fields = ShipGenerator.wrapWithFields(emptyCollection);
-    return fields;
+  private async setWinner(match, winner: string) {
+    await this.matchService.updateMatch({
+      ...match,
+      winner,
+      readyState: null,
+      state: GameState.finished,
+    });
   }
 }

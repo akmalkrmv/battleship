@@ -12,11 +12,17 @@ export enum GameState {
 export interface Match {
   id: string;
   state: GameState;
+  game?: number;
+  readyState?: object;
+  winner?: string;
+  current?: string;
   creator?: User;
   opponent?: User;
+  exists?: boolean;
 }
 
 export interface Move {
-  userId: string;
-  data: any;
+  player: string;
+  index: number;
 }
+

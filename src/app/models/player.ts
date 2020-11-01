@@ -1,4 +1,5 @@
-import { Field, FieldJSON } from './field';
+import { Field } from './field';
+import { ShipsMap } from './ship';
 import { User } from './user';
 
 export class Player {
@@ -6,7 +7,8 @@ export class Player {
   public photoURL?: string;
   public displayName: string;
   public battlefield: Field[] = [];
-  public ships: FieldJSON = {};
+  public ships: ShipsMap = {};
+  public isReady = false;
   public isComputer = false;
 
   constructor() {}

@@ -1,4 +1,3 @@
-
 export enum Direction {
   horizontal = 'horizontal',
   vertical = 'vertical',
@@ -12,6 +11,7 @@ export enum ShipType {
 }
 
 export class Ship {
+  public uid: string;
   public name: string;
   public length: number;
   public hits: number = 0;
@@ -22,7 +22,16 @@ export class Ship {
   public isEnd: boolean = false;
 
   constructor(public type: ShipType) {
+    this.uid = Math.random().toString();
     this.name = ShipType[type];
     this.length = type;
   }
+}
+
+export type ShipsMap = { [index: number]: Ship };
+
+export interface ShipPlacement {
+  created?: number;
+  player: string;
+  shipsMap: ShipsMap;
 }

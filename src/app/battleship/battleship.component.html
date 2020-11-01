@@ -1,32 +1,51 @@
 <mat-progress-bar
-  [mode]="(loading$ | async) ? 'indeterminate' : 'determinate'"
+  [mode]="(battleship.loading$ | async) ? 'indeterminate' : 'determinate'"
 ></mat-progress-bar>
 
 <div class="container header">
-  <h1><a routerLink="/">Battleship</a></h1>
+  <h1>
+    <a routerLink="/">Battleship</a>
+  </h1>
 </div>
 
 <div class="container players">
-  <app-user [user]="battleship.player$ | async"></app-user>
-  <app-user [user]="battleship.opponent$ | async"></app-user>
+  <app-user
+    class="player"
+    [user]="battleship.player$ | async"
+    [winner]="battleship.winner$ | async"
+  ></app-user>
+  <app-user
+    class="player"
+    [user]="battleship.opponent$ | async"
+    [winner]="battleship.winner$ | async"
+  ></app-user>
 </div>
 
 <div class="container state-{{ battleship.state$ | async }}">
   <app-battlefield
-    [player]="battleship.player$ | async"
+    [isClickable]="false"
     [current]="battleship.current$ | async"
+    [player]="battleship.player$ | async"
+    [ships]="battleship.ships$ | async"
+    [moves]="battleship.moves$ | async"
     (fired)="battleship.fire($event)"
   ></app-battlefield>
 
   <app-battlefield
     [isVisible]="false"
-    [player]="battleship.opponent$ | async"
     [current]="battleship.current$ | async"
+    [player]="battleship.opponent$ | async"
+    [ships]="battleship.ships$ | async"
+    [moves]="battleship.moves$ | async"
     (fired)="battleship.fire($event)"
   ></app-battlefield>
 </div>
 
 <div class="container">
-  <app-controls class="controls" [state]="battleship.state$ | async">
+  <app-controls
+    class="controls"
+    [state]="battleship.state$ | async"
+    [ready]="battleship.ready$ | async"
+  >
   </app-controls>
 </div>

@@ -1,15 +1,23 @@
 <ng-container [ngSwitch]="state">
-  <ng-container *ngSwitchCase="'waiting'">
-    <mat-icon>cached</mat-icon> Waiting people to join
+  <ng-container *ngSwitchCase="'open'">
+    <p class="info">Waiting for opponent to join...</p>
   </ng-container>
 
   <ng-container *ngSwitchCase="'preparing'">
-    <button mat-raised-button color="secondary" (click)="battleship.randomize()">
-      <mat-icon>shuffle</mat-icon> Randomize
-    </button>
-    <button mat-raised-button color="primary" (click)="battleship.start()">
-      <mat-icon>play_arrow</mat-icon> Ready
-    </button>
+    <p *ngIf="ready" class="info">Waiting for opponent...</p>
+
+    <ng-container *ngIf="!ready">
+      <button
+        mat-raised-button
+        color="secondary"
+        (click)="battleship.randomize()"
+      >
+        <mat-icon>shuffle</mat-icon> Shuffle
+      </button>
+      <button mat-raised-button color="primary" (click)="battleship.start()">
+        <mat-icon>play_arrow</mat-icon> Ready
+      </button>
+    </ng-container>
   </ng-container>
 
   <ng-container *ngSwitchCase="'playing'">
@@ -19,6 +27,9 @@
   </ng-container>
 
   <ng-container *ngSwitchCase="'finished'">
+    <button mat-raised-button color="secondary" routerLink="/">
+      <mat-icon>arrow_back_ios</mat-icon> Back to matches
+    </button>
     <button mat-raised-button color="primary" (click)="battleship.restart()">
       <mat-icon>replay</mat-icon> Play again
     </button>

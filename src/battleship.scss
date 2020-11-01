@@ -72,22 +72,6 @@ h1 {
   }
 }
 
-.state-playing {
-  .battlefield {
-    opacity: 0.6;
-
-    & > .field:hover:not(.sunk):not(.taken) {
-      background-color: #43d0ff;
-      cursor: pointer;
-    }
-  }
-
-  .current,
-  .current .battlefield {
-    opacity: 1;
-  }
-}
-
 .battlefield {
   $field-size: 4.6vmin;
   position: relative;
@@ -216,6 +200,11 @@ h1 {
     background-color: #f338;
     &:hover {
       background-color: #f338 !important;
+    }
+
+    &::before,
+    &::after {
+      content: none;
     }
   }
 }

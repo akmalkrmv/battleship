@@ -1,0 +1,16 @@
+.battlefield {
+  opacity: 1;
+
+  &.clickable {
+    opacity: 0.6;
+
+    &.active {
+      opacity: 1;
+
+      .field:hover:not(.sunk):not(.taken) {
+        background-color: #43d0ff;
+        cursor: pointer;
+      }
+    }
+  }
+}

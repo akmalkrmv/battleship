@@ -17,9 +17,6 @@ import { BattleshipService } from '../services/battleship.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BattleshipComponent implements OnInit, OnDestroy {
-  public loading$ = this.battleship.loading$;
-  public state$ = this.battleship.state$;
-  public match$ = this.battleship.match$;
 
   constructor(
     public auth: AuthService,

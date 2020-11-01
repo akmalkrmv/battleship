@@ -2,10 +2,9 @@ import { Injectable } from '@angular/core';
 import { AngularFirestore } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { GameState, Match, Move } from '@models/match';
 import { User } from '@models/user';
-import { Player } from '@models/player';
-import { Ship } from '@models/ship';
+import { ShipPlacement } from '@models/ship';
+import { GameState, Match, Move } from '@models/match';
 
 @Injectable({ providedIn: 'root' })
 export class MatchService {
@@ -42,54 +41,48 @@ export class MatchService {
   }
 
   public matchChanges(matchId: string): Observable<Match> {
-    return this.firestore.doc<Match>(`matches/${matchId}`).valueChanges();
+    return this.firestore
+      .doc<Match>(`matches/${matchId}`)
+      .snapshotChanges()
+      .pipe(
+        map((snapshot) => ({
+          id: snapshot.payload.id,
+          exists: snapshot.payload.exists,
+          ...snapshot.payload.data(),
+        }))
+      );
   }
 
   public async createMatch(user: User): Promise<string> {
-    const id = await this.addToCollection(`matches`, {
+    return await this.addToCollection(`matches`, {
       creator: user,
       state: GameState.open,
+      game: 1,
     });
-
-    await this.firestore
-      .doc(`matches/${id}/players/${user.uid}`)
-      .set(user, { merge: true });
-
-    return id;
   }
 
   public async updateMatch({ id, ...rest }: Partial<Match>): Promise<void> {
     return await this.firestore.doc(`matches/${id}`).set(rest, { merge: true });
   }
 
-  // Players
-
-  public async addPlayer(matchId: string, player: Player): Promise<string> {
-    return await this.addToCollection(`matches/${matchId}/players`, player);
+  // Ships
+  public async addShips(match: Match, ships: ShipPlacement): Promise<string> {
+    ships = { ...ships, created: Date.now() };
+    const path = `matches/${match.id}/game/${match.game}/ships`;
+    return await this.addToCollection(path, ships);
   }
-  public async updatePlayer(
-    matchId: string,
-    { uid: uid, ...rest }: Partial<Player>
-  ): Promise<void> {
-    const path = `matches/${matchId}/players/${uid}`;
-    return await this.firestore.doc(path).set(rest, { merge: false });
-  }
-  public playerChanges(matchId: string, playerId: string): Observable<Player> {
-    const path = `matches/${matchId}/players/${playerId}`;
-    return this.firestore.doc<Player>(path).valueChanges();
+  public shipsChanges(match: Match): Observable<ShipPlacement[]> {
+    const path = `matches/${match.id}/game/${match.game}/ships`;
+    return this.firestore.collection<ShipPlacement>(path).valueChanges();
   }
 
   // Moves
-  public async move(
-    matchId: string,
-    playerId: string,
-    move: Move
-  ): Promise<string> {
-    const path = `matches/${matchId}/players/${playerId}/moves`;
+  public async move(match: Match, move: Move): Promise<string> {
+    const path = `matches/${match.id}/game/${match.game}/moves`;
     return await this.addToCollection(path, move);
   }
-  public moveChanges(matchId: string, playerId: string): Observable<Move[]> {
-    const path = `matches/${matchId}/players/${playerId}/moves`;
+  public moveChanges(match: Match): Observable<Move[]> {
+    const path = `matches/${match.id}/game/${match.game}/moves`;
     return this.firestore.collection<Move>(path).valueChanges();
   }
 }

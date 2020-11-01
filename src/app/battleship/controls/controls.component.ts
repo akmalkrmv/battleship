@@ -10,6 +10,7 @@ import { BattleshipService } from '@services/battleship.service';
 })
 export class ControlsComponent {
   @Input() state: GameState = GameState.preparing;
+  @Input() ready: boolean = false;
 
   constructor(public battleship: BattleshipService) {}
 }
